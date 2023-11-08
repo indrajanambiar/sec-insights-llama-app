@@ -54,6 +54,7 @@ from app.chat.tools import get_api_query_engine_tool
 from app.chat.utils import build_title_for_document
 from app.chat.pg_vector import get_vector_store_singleton
 from app.chat.qa_response_synth import get_custom_response_synth
+from llama_index.llms import AzureOpenAI
 
 
 logger = logging.getLogger(__name__)
@@ -211,30 +212,62 @@ def get_chat_history(
 def get_tool_service_context(
     callback_handlers: List[BaseCallbackHandler],
 ) -> ServiceContext:
-    llm = OpenAI(
-        temperature=0,
-        model="gpt-3.5-turbo-0613",
-        streaming=False,
-        api_key=settings.OPENAI_API_KEY,
-        additional_kwargs={"api_key": settings.OPENAI_API_KEY},
-    )
+    # llm = OpenAI(
+    #     temperature=0,
+    #     model="gpt-3.5-turbo-0613",
+    #     streaming=False,
+    #     api_key=settings.OPENAI_API_KEY,
+    #     additional_kwargs={"api_key": settings.OPENAI_API_KEY},
+    # )
+    
+    api_key = "4a191beb11f64ec6bd1213b6bb6deadd"
+    api_base = "https://polcheck-dev-openai.openai.azure.com/"
+    api_type = "azure"
+    api_version = "2023-05-15"
+    
+    
+    llm = AzureOpenAI(
+        model="gpt-3.5-turbo",
+        engine="test",
+        api_key=api_key,
+        api_base=api_base,
+        api_type=api_type,
+        api_version=api_version,
+    )   
+    
     callback_manager = CallbackManager(callback_handlers)
+    # embedding_model = OpenAIEmbedding(
+    #     mode=OpenAIEmbeddingMode.SIMILARITY_MODE,
+    #     model_type=OpenAIEmbeddingModelType.TEXT_EMBED_ADA_002,
+    #     api_key=settings.OPENAI_API_KEY,
+    # )
+    
     embedding_model = OpenAIEmbedding(
-        mode=OpenAIEmbeddingMode.SIMILARITY_MODE,
-        model_type=OpenAIEmbeddingModelType.TEXT_EMBED_ADA_002,
-        api_key=settings.OPENAI_API_KEY,
+        model="text-embedding-ada-002",
+        deployment_name="test_embedding",
+        api_key=api_key,
+        api_base=api_base,
+        api_type=api_type,
+        api_version=api_version,
     )
+        
     # Use a smaller chunk size to retrieve more granular results
-    node_parser = SimpleNodeParser.from_defaults(
-        chunk_size=NODE_PARSER_CHUNK_SIZE,
-        chunk_overlap=NODE_PARSER_CHUNK_OVERLAP,
-        callback_manager=callback_manager,
-    )
+    # node_parser = SimpleNodeParser.from_defaults(
+    #     chunk_size=NODE_PARSER_CHUNK_SIZE,
+    #     chunk_overlap=NODE_PARSER_CHUNK_OVERLAP,
+    #     callback_manager=callback_manager,
+    # )
+    # service_context = ServiceContext.from_defaults(
+    #     callback_manager=callback_manager,
+    #     llm=llm,
+    #     embed_model=embedding_model,
+    #     node_parser=node_parser,
+    # )
+    # return service_context
+    
     service_context = ServiceContext.from_defaults(
-        callback_manager=callback_manager,
         llm=llm,
         embed_model=embedding_model,
-        node_parser=node_parser,
     )
     return service_context
 
@@ -310,13 +343,27 @@ Any questions about company-related financials or other metrics should be asked 
         ),
     ]
 
-    chat_llm = OpenAI(
-        temperature=0,
-        model="gpt-3.5-turbo-0613",
-        streaming=True,
-        api_key=settings.OPENAI_API_KEY,
-        additional_kwargs={"api_key": settings.OPENAI_API_KEY},
-    )
+    # chat_llm = OpenAI(
+    #     temperature=0,
+    #     model="gpt-3.5-turbo-0613",
+    #     streaming=True,
+    #     api_key=settings.OPENAI_API_KEY,
+    #     additional_kwargs={"api_key": settings.OPENAI_API_KEY},
+    # )
+    
+    # chat_llm = AzureOpenAI(
+    #     engine="test", model="gpt-3.5-turbo", temperature=0.0
+    # ) 
+    
+    chat_llm = AzureOpenAI(
+        model="gpt-3.5-turbo",
+        engine="test",
+        api_key="4a191beb11f64ec6bd1213b6bb6deadd",
+        api_base="https://polcheck-dev-openai.openai.azure.com/",
+        api_type="azure",
+        api_version="2023-05-15",
+    ) 
+    
     chat_messages: List[MessageSchema] = conversation.messages
     chat_history = get_chat_history(chat_messages)
     logger.debug("Chat history: %s", chat_history)
